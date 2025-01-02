@@ -1,6 +1,8 @@
 import mineflayer from "mineflayer";
 import pkg from 'mineflayer-pathfinder';
 const { pathfinder, Movements, goals } = pkg;
+import { InventoryManager } from './lib/inventory.js';
+import { AutoEater } from './lib/autoEat.js';
 
 const bot = mineflayer.createBot({
     host: "in9.gbnodes.com",
@@ -14,10 +16,20 @@ const bot = mineflayer.createBot({
 // Add pathfinder
 bot.loadPlugin(pathfinder);
 
+// Initialize systems
+let inventoryManager;
+let autoEater;
+
 // Initialize pathfinder when bot spawns
 bot.once('spawn', () => {
     const movements = new Movements(bot);
     bot.pathfinder.setMovements(movements);
+    
+    // Initialize inventory management and auto-eating
+    inventoryManager = new InventoryManager(bot);
+    autoEater = new AutoEater(bot, inventoryManager);
+    
+    console.log('Bot systems initialized: Inventory Manager, Auto-Eater');
 });
 
 // Single chat event handler
@@ -40,6 +52,42 @@ bot.on("chat", async (username, message) => {
             break;
         case 'wear armor':
             await weararmor();
+            break;
+        case 'inventory':
+        case 'inv':
+            if (inventoryManager) {
+                bot.chat(inventoryManager.getInventorySummary());
+            }
+            break;
+        case 'eat':
+            if (autoEater) {
+                await autoEater.forceEat();
+            }
+            break;
+        case 'health':
+        case 'status':
+            if (autoEater) {
+                const status = autoEater.getEatingStatus();
+                bot.chat(`Health: ${status.health}/${status.maxHealth} | Hunger: ${status.hunger}/${status.maxHunger} | Food items: ${status.foodCount}`);
+            }
+            break;
+        case 'organize':
+            if (inventoryManager) {
+                await inventoryManager.organizeInventory();
+                bot.chat('Inventory organized!');
+            }
+            break;
+        case 'auto eat on':
+            if (autoEater) {
+                autoEater.startAutoEating();
+                bot.chat('Auto-eating enabled');
+            }
+            break;
+        case 'auto eat off':
+            if (autoEater) {
+                autoEater.stopAutoEating();
+                bot.chat('Auto-eating disabled');
+            }
             break;
     }
     if (message.startsWith('find')) {
