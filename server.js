@@ -1,148 +1,152 @@
-import mineflayer from 'mineflayer';
-import { Vec3 } from 'vec3';
-import minecraftData from 'minecraft-data';
-import { pathfinder } from 'mineflayer-pathfinder';
+import mineflayer from "mineflayer";
+import pkg from 'mineflayer-pathfinder';
+const { pathfinder, Movements, goals } = pkg;
 
-const options = { 
-    host: 'in9.gbnodes.com',
+const bot = mineflayer.createBot({
+    host: "in9.gbnodes.com",
     port: 25691,
-    username: `RandBot`, // Random username to avoid conflicts
+    username: "randbot",
+    version: "1.19.2",  // Add specific version
+    auth: 'offline',    // Add offline mode
+    viewDistance: "normal"
+});
 
-}
-
-const bot = mineflayer.createBot(options);
-
-// Add this right after creating the bot
+// Add pathfinder
 bot.loadPlugin(pathfinder);
 
-// Add error handling
-bot.on('error', (err) => {
-    console.log('Error:', err);
-});
-
-// Add login confirmation
-bot.on('login', () => {
-    console.log('Bot has logged in');
-});
-
-// Add disconnect handling
-bot.on('kicked', (reason) => {
-    console.log('Bot was kicked:', reason);
-});
-
-// Initialize mcData after bot is ready
-let mcData;
+// Initialize pathfinder when bot spawns
 bot.once('spawn', () => {
-    mcData = minecraftData(bot.version);
+    const movements = new Movements(bot);
+    bot.pathfinder.setMovements(movements);
 });
 
-async function craftItem(name, amount) {
-    const item = mcData.itemsByName[name];
-    const recipe = bot.recipesFor(item.id)[0];
-    if (recipe) {
-        try {
-            await bot.craft(recipe, amount);
-            bot.chat(`Crafted ${name}`);
-        } catch (err) {
-            bot.chat(`Error crafting ${name}`);
+// Single chat event handler
+bot.on("chat", async (username, message) => {
+    if (username === bot.username) return;
+    
+    switch(message) {
+        case 'loaded':
+            await bot.waitForChunksToLoad();
+            bot.chat('Ready!');
+            console.log('Current position:', bot.entity.position);
+            break;
+        
+        case 'find diamonds':
+            await findAndGoToDiamonds(diamonds);
+            break;
+        case 'end work': 
+            bot.chat('Ending work');
+            bot.respawn();
+            break;
+        case 'wear armor':
+            await weararmor();
+            break;
+    }
+    if (message.startsWith('find')) {
+        const name = message.split(' ')[1];
+        if (bot.registry.blocksByName[name] === undefined) {
+            bot.chat(`${name} is not a block name`);
+            return;
         }
+        await findAndGoToBlock(name);
     }
-}
+});
 
-async function equipItem(name) {
-    const item = bot.inventory.items().find(item => item.name.includes(name));
-    if (item) {
-        await bot.equip(item, 'hand');
-    }
-}
-
-async function mineBlock(blockName) {
-    if (!mcData) {
-        bot.chat("Still initializing, please wait...");
-        return false;
-    }
-
-    const block = mcData.blocksByName[blockName];
-    if (!block) {
-        bot.chat(`Cannot find block: ${blockName}`);
-        return false;
-    }
-
+async function findAndGoToBlock(blockName) {
+    bot.chat(`Searching for ${blockName}...`);
+    
     const blocks = bot.findBlocks({
-        matching: block.id,
-        maxDistance: 32,
-        count: 1
+        matching: bot.registry.blocksByName[blockName].id,
+        maxDistance: 128,
+        count: 100  // Find up to 100 blocks
     });
 
-    if (blocks.length) {
-        const targetBlock = bot.blockAt(blocks[0]);
-        try {
-            await bot.pathfinder.goto(new Vec3(targetBlock.position.x, targetBlock.position.y, targetBlock.position.z));
-            await bot.dig(targetBlock);
-            return true;
-        } catch (err) {
-            console.log('Mining error:', err);
-            return false;
-        }
-    }
-    return false;
-}
-
-async function startMining() {
-    if (!mcData) {
-        bot.chat("Please wait for initialization...");
+    if (blocks.length === 0) {
+        bot.chat(`No ${blockName} found nearby!`);
         return;
     }
-    
-    // First get wood
-    bot.chat("Looking for wood...");
-    await mineBlock('oak_log');
-    
-    // Craft wooden pickaxe
-    await craftItem('wooden_pickaxe', 1);
-    await equipItem('wooden_pickaxe');
-    
-    // Mine stone
-    bot.chat("Mining stone...");
-    await mineBlock('stone');
-    
-    // Craft stone tools
-    await craftItem('stone_pickaxe', 1);
-    await equipItem('stone_pickaxe');
-    
-    // Start looking for diamonds
-    bot.chat("Searching for diamonds...");
-    while (true) {
-        const found = await mineBlock('diamond_ore');
-        if (found) {
-            bot.chat("Found diamonds!");
+
+    bot.chat(`Found ${blocks.length} ${blockName} blocks! Starting mining operation...`);
+
+    let successCount = 0;
+    for (const targetPos of blocks) {
+        try {
+            // Move to block
+            const goal = new goals.GoalBlock(targetPos.x, targetPos.y, targetPos.z);
+            await bot.pathfinder.goto(goal);
+            
+            // Mine the block
+            const block = bot.blockAt(targetPos);
+            if (block && block.name === blockName) {
+                bot.chat(`Mining ${blockName} at ${targetPos.x}, ${targetPos.y}, ${targetPos.z}`);
+                await bot.dig(block);
+                successCount++;
+                
+                // Progress update every 10 blocks
+                if (successCount % 10 === 0) {
+                    bot.chat(`Progress: Mined ${successCount} ${blockName} blocks`);
+                }
+            }
+        } catch (err) {
+            console.error(`Failed to mine block at ${targetPos.x, targetPos.y, targetPos.z}:`, err.message);
+            continue; // Continue with next block even if one fails
+        }
+    }
+
+    bot.chat(`Mining operation complete! Successfully mined ${successCount} ${blockName} blocks`);
+}
+
+async function weararmor() {
+    const armorSlots = {
+        helmet: 'head',
+        chestplate: 'torso',
+        leggings: 'legs',
+        boots: 'feet'
+    };
+
+    // Get all items from inventory
+    const items = bot.inventory.items();
+    if (!items || items.length === 0) {
+        bot.chat("No items in inventory!");
+        return;
+    }
+
+    // Try to equip each type of armor
+    for (const [armorType, slot] of Object.entries(armorSlots)) {
+        const armorPiece = items.find(item => item && item.name && item.name.includes(armorType));
+        if (armorPiece) {
+            try {
+                await bot.equip(armorPiece, slot);
+                bot.chat(`Equipped ${armorPiece.name}`);
+                await bot.wait(1000); // Wait for 1 second before equipping the next piece
+            } catch (err) {
+                bot.chat(`Failed to equip ${armorPiece.name}: ${err.message}`);
+            }
         }
     }
 }
 
-// karsakta h 
-bot.on('message' , (message) => {
-    if (message.toString().includes('bot teri maki chut')) {
-        console.log(message.toString());
-    }
-    if (message.toString().includes('bot teri maki chut')) {
-        bot.chat('teri maki chut');
-    }
-    if (message.toString().includes('bot mine')) {
-        startMining();
-    }
+// Connection events
+bot.on("login", () => {
+    console.log("Bot logged in successfully");
+    bot.chat("loaded");
 });
 
 bot.on("spawn", () => {
-    bot.chat("Hello world!");
-}); 
+    console.log("Bot spawned at:", bot.entity.position);
+    bot.chat("find stone");
+});
 
+// Error handling
+bot.on("error", (err) => {
+    console.error("Bot error:", err);
+});
 
-function lookatNearestPlayer(){ 
-    const playerFilter = (entity) => entity.type === 'player';
-    const playerEntity = bot.nearestEntity(playerFilter);
-    if (!playerEntity) return;
-    const pos = playerEntity.position.offset(0, playerEntity.height, 0);
-    bot.lookAt(pos);
-}
-bot.on('physicTick', lookatNearestPlayer);
+bot.on("end", () => {
+    console.log("Bot disconnected");
+});
+
+bot.on("kicked", (reason) => {
+    console.error("Bot was kicked:", JSON.parse(reason));
+});
+
