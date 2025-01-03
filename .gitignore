@@ -16,6 +16,7 @@ build/
 # Ignore temporary files
 *.tmp
 *.temp
+bun.lock
 
 # Ignore OS-specific files
 .DS_Store

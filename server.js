@@ -3,6 +3,8 @@ import pkg from 'mineflayer-pathfinder';
 const { pathfinder, Movements, goals } = pkg;
 import { InventoryManager } from './lib/inventory.js';
 import { AutoEater } from './lib/autoEat.js';
+import { CombatSystem } from './lib/combat.js';
+import { FarmingSystem } from './lib/farming.js';
 
 const bot = mineflayer.createBot({
     host: "in9.gbnodes.com",
@@ -19,6 +21,8 @@ bot.loadPlugin(pathfinder);
 // Initialize systems
 let inventoryManager;
 let autoEater;
+let combatSystem;
+let farmingSystem;
 
 // Initialize pathfinder when bot spawns
 bot.once('spawn', () => {
@@ -28,8 +32,10 @@ bot.once('spawn', () => {
     // Initialize inventory management and auto-eating
     inventoryManager = new InventoryManager(bot);
     autoEater = new AutoEater(bot, inventoryManager);
+    combatSystem = new CombatSystem(bot, inventoryManager);
+    farmingSystem = new FarmingSystem(bot);
     
-    console.log('Bot systems initialized: Inventory Manager, Auto-Eater');
+    console.log('Bot systems initialized: Inventory, Auto-Eat, Combat, Farming');
 });
 
 // Single chat event handler
@@ -87,6 +93,30 @@ bot.on("chat", async (username, message) => {
             if (autoEater) {
                 autoEater.stopAutoEating();
                 bot.chat('Auto-eating disabled');
+            }
+            break;
+        case 'fight on':
+        case 'combat on':
+            if (combatSystem) {
+                combatSystem.startAutoAttack();
+                bot.chat('Auto-combat enabled');
+            }
+            break;
+        case 'fight off':
+        case 'combat off':
+            if (combatSystem) {
+                combatSystem.stopAutoAttack();
+                bot.chat('Auto-combat disabled');
+            }
+            break;
+        case 'farm':
+            if (farmingSystem) {
+                await farmingSystem.startFarming();
+            }
+            break;
+        case 'farm stop':
+            if (farmingSystem) {
+                farmingSystem.stopFarming();
             }
             break;
     }
