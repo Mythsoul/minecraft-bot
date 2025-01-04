@@ -5,13 +5,16 @@ import { InventoryManager } from './lib/inventory.js';
 import { AutoEater } from './lib/autoEat.js';
 import { CombatSystem } from './lib/combat.js';
 import { FarmingSystem } from './lib/farming.js';
+import { FishingBot } from './lib/fishing.js';
+import { FollowSystem } from './lib/follow.js';
+import { WaypointSystem } from './lib/waypoints.js';
 
 const bot = mineflayer.createBot({
     host: "in9.gbnodes.com",
     port: 25691,
-    username: "randbot",
-    version: "1.19.2",  // Add specific version
-    auth: 'offline',    // Add offline mode
+    username: "Mythsoul",
+    version: "1.19.2",  
+    auth: 'offline',   
     viewDistance: "normal"
 });
 
@@ -23,6 +26,9 @@ let inventoryManager;
 let autoEater;
 let combatSystem;
 let farmingSystem;
+let fishingBot;
+let followSystem;
+let waypointSystem;
 
 // Initialize pathfinder when bot spawns
 bot.once('spawn', () => {
@@ -34,8 +40,11 @@ bot.once('spawn', () => {
     autoEater = new AutoEater(bot, inventoryManager);
     combatSystem = new CombatSystem(bot, inventoryManager);
     farmingSystem = new FarmingSystem(bot);
+    fishingBot = new FishingBot(bot);
+    followSystem = new FollowSystem(bot);
+    waypointSystem = new WaypointSystem(bot);
     
-    console.log('Bot systems initialized: Inventory, Auto-Eat, Combat, Farming');
+    console.log('All bot systems loaded and ready!');
 });
 
 // Single chat event handler
@@ -136,7 +145,7 @@ async function findAndGoToBlock(blockName) {
     const blocks = bot.findBlocks({
         matching: bot.registry.blocksByName[blockName].id,
         maxDistance: 128,
-        count: 100  // Find up to 100 blocks
+        count: 100 
     });
 
     if (blocks.length === 0) {
