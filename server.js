@@ -10,7 +10,7 @@ import { FollowSystem } from './lib/follow.js';
 import { WaypointSystem } from './lib/waypoints.js';
 
 const bot = mineflayer.createBot({
-    host: "in9.gbnodes.com",
+    host: process.env.host,
     port: 25691,
     username: "Mythsoul",
     version: "1.19.2",  
