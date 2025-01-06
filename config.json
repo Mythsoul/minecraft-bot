@@ -1,0 +1,25 @@
+{
+  "server": {
+    "host": "in9.gbnodes.com",
+    "port": 25691,
+    "username": "Mythsoul",
+    "version": "1.19.2",
+    "auth": "offline"
+  },
+  "bot": {
+    "autoEat": true,
+    "autoFight": false,
+    "followDistance": 3,
+    "healthThreshold": 15,
+    "hungerThreshold": 16
+  },
+  "features": {
+    "inventoryManagement": true,
+    "autoEating": true,
+    "combat": true,
+    "farming": true,
+    "fishing": true,
+    "waypoints": true,
+    "commands": true
+  }
+}

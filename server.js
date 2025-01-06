@@ -8,14 +8,15 @@ import { FarmingSystem } from './lib/farming.js';
 import { FishingBot } from './lib/fishing.js';
 import { FollowSystem } from './lib/follow.js';
 import { WaypointSystem } from './lib/waypoints.js';
-
+import dotenv from 'dotenv'
+dotenv.config();
 const bot = mineflayer.createBot({
-    host: process.env.host,
-    port: 25691,
-    username: "Mythsoul",
-    version: "1.19.2",  
-    auth: 'offline',   
-    viewDistance: "normal"
+    host: process.env.HOST ,
+    port: process.env.PORT ,
+    username: process.env.USERNAME ,
+    version: process.env.VERSION ,  
+    auth: process.env.AUTH || 'offline',   
+    viewDistance: process.env.VIEW_DISTANCE || 'normal' 
 });
 
 // Add pathfinder

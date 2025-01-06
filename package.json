@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "assert": "^2.1.0",
+    "dotenv": "^17.2.1",
     "minecraft-data": "^3.80.0",
     "mineflayer": "^4.23.0",
     "mineflayer-pathfinder": "^2.4.5",
