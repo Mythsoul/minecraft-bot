@@ -16,7 +16,7 @@ const bot = mineflayer.createBot({
     username: process.env.USERNAME ,
     version: process.env.VERSION ,  
     auth: process.env.AUTH || 'offline',   
-    viewDistance: process.env.VIEW_DISTANCE || 'normal' 
+viewDistance: process.env.VIEW_DISTANCE || 'normal' 
 });
 
 // Add pathfinder
