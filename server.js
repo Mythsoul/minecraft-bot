@@ -11,8 +11,8 @@ import { WaypointSystem } from './lib/waypoints.js';
 import dotenv from 'dotenv'
 dotenv.config();
 const bot = mineflayer.createBot({
-    host: process.env.HOST ,
-    port: process.env.PORT ,
+    host: String(process.env.HOST) ,
+    port:process.env.PORT ,
     username: process.env.USERNAME ,
     version: process.env.VERSION ,  
     auth: process.env.AUTH || 'offline',   
