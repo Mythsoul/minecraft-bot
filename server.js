@@ -12,7 +12,7 @@ import dotenv from 'dotenv'
 dotenv.config();
 const bot = mineflayer.createBot({
     host: String(process.env.HOST) ,
-    port:process.env.PORT ,
+    port: Number(process.env.PORT) ,
     username: process.env.USERNAME ,
     version: process.env.VERSION ,  
     auth: process.env.AUTH || 'offline',   
