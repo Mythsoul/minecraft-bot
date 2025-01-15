@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Bot Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-robot"></i> Minecraft Bot Dashboard</h1>
+            <div id="connectionStatus" class="status-badge offline">
+                <i class="fas fa-circle"></i>
+                <span>Connecting...</span>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Bot Status Card -->
+            <div class="card bot-status">
+                <div class="card-header">
+                    <h3><i class="fas fa-heartbeat"></i> Bot Status</h3>
+                </div>
+                <div class="card-content">
+                    <div class="status-grid">
+                        <div class="stat">
+                            <div class="stat-icon health">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Health</span>
+                                <span id="health" class="stat-value">--/20</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat">
+                            <div class="stat-icon hunger">
+                                <i class="fas fa-drumstick-bite"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Hunger</span>
+                                <span id="food" class="stat-value">--/20</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat">
+                            <div class="stat-icon position">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Position</span>
+                                <span id="position" class="stat-value">-- -- --</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat">
+                            <div class="stat-icon weather">
+                                <i class="fas fa-cloud-sun"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Weather</span>
+                                <span id="weather" class="stat-value">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Systems Status Card -->
+            <div class="card systems-status">
+                <div class="card-header">
+                    <h3><i class="fas fa-cogs"></i> Systems</h3>
+                </div>
+                <div class="card-content">
+                    <div class="system-item">
+                        <span class="system-name">
+                            <i class="fas fa-utensils"></i> Auto-Eat
+                        </span>
+                        <span id="autoEat" class="system-status">--</span>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">
+                            <i class="fas fa-sword"></i> Combat
+                        </span>
+                        <span id="combat" class="system-status">--</span>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">
+                            <i class="fas fa-seedling"></i> Farming
+                        </span>
+                        <span id="farming" class="system-status">--</span>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">
+                            <i class="fas fa-fish"></i> Fishing
+                        </span>
+                        <span id="fishing" class="system-status">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Card -->
+            <div class="card controls">
+                <div class="card-header">
+                    <h3><i class="fas fa-gamepad"></i> Controls</h3>
+                </div>
+                <div class="card-content">
+                    <div class="control-buttons">
+                        <button class="btn btn-primary" onclick="sendCommand('!status')">
+                            <i class="fas fa-info"></i> Status
+                        </button>
+                        <button class="btn btn-secondary" onclick="sendCommand('!inv')">
+                            <i class="fas fa-box"></i> Inventory
+                        </button>
+                        <button class="btn btn-success" onclick="sendCommand('!eat')">
+                            <i class="fas fa-utensils"></i> Eat
+                        </button>
+                        <button class="btn btn-warning" onclick="sendCommand('!farm')">
+                            <i class="fas fa-seedling"></i> Farm
+                        </button>
+                        <button class="btn btn-info" onclick="sendCommand('!fish')">
+                            <i class="fas fa-fish"></i> Fish
+                        </button>
+                        <button class="btn btn-danger" onclick="sendCommand('!stop')">
+                            <i class="fas fa-stop"></i> Stop All
+                        </button>
+                    </div>
+                    
+                    <div class="custom-command">
+                        <div class="input-group">
+                            <input type="text" id="customCommand" class="command-input" placeholder="Enter custom command...">
+                            <button class="btn btn-primary" onclick="sendCustomCommand()">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Card -->
+            <div class="card inventory">
+                <div class="card-header">
+                    <h3><i class="fas fa-box-open"></i> Inventory</h3>
+                    <span id="inventoryInfo" class="inventory-count">Loading...</span>
+                </div>
+                <div class="card-content">
+                    <div id="inventoryGrid" class="inventory-grid"></div>
+                </div>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="card statistics">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-line"></i> Statistics</h3>
+                </div>
+                <div class="card-content">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="uptime">--</div>
+                            <div class="stat-description">Uptime</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="blocksMinedTotal">--</div>
+                            <div class="stat-description">Blocks Mined</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="distanceTraveled">--</div>
+                            <div class="stat-description">Distance (m)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="combatKills">--</div>
+                            <div class="stat-description">Kills</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Log Card -->
+            <div class="card chat-log">
+                <div class="card-header">
+                    <h3><i class="fas fa-comments"></i> Chat Log</h3>
+                    <button class="btn btn-small" onclick="clearChatLog()">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+                <div class="card-content">
+                    <div id="chatLog" class="chat-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

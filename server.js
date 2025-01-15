@@ -15,7 +15,7 @@ const bot = mineflayer.createBot({
     host: String(process.env.HOST) ,
     port: Number(process.env.PORT) ,
     username: String(process.env.USERNAME) ,
-    version: String(process.env.VERSION) ,
+    version: process.env.VERSION ,
     auth: String(process.env.AUTH) || 'offline',
     viewDistance: String(process.env.VIEW_DISTANCE) || 'normal'
 });

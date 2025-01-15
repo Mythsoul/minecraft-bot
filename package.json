@@ -12,7 +12,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Advanced Minecraft bot with automated systems for mining, farming, combat, and more",
   "dependencies": {
     "assert": "^2.1.0",
     "minecraft-data": "^3.80.0",
