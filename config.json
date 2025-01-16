@@ -1,10 +1,11 @@
 {
   "server": {
-    "host": "in9.gbnodes.com",
-    "port": 25691,
-    "username": "Mythsoul",
+    "host": "waryfish.aternos.host",
+    "port": 47230,
+    "username": "moon",
     "version": "1.19.2",
-    "auth": "offline"
+    "auth": "offline",
+    "viewDistance": "normal"
   },
   "bot": {
     "autoEat": true,
@@ -12,6 +13,10 @@
     "followDistance": 3,
     "healthThreshold": 15,
     "hungerThreshold": 16
+  },
+  "web": {
+    "port": 3000,
+    "enabled": true
   },
   "features": {
     "inventoryManagement": true,

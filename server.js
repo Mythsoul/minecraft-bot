@@ -8,16 +8,23 @@ import { FarmingSystem } from './lib/farming.js';
 import { FishingBot } from './lib/fishing.js';
 import { FollowSystem } from './lib/follow.js';
 import { WaypointSystem } from './lib/waypoints.js';
-import dotenv from 'dotenv'
-import { strict } from "assert";
-dotenv.config();
+import { CommandSystem } from './lib/commands.js';
+import { ResourceMonitor } from './lib/monitor.js';
+import { WebDashboard } from './lib/webDashboard.js';
+import fs from 'fs';
+
+// Load configuration from config.json
+const config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+
 const bot = mineflayer.createBot({
-    host: String(process.env.HOST) ,
-    port: Number(process.env.PORT) ,
-    username: String(process.env.USERNAME) ,
-    version: process.env.VERSION ,
-    auth: String(process.env.AUTH) || 'offline',
-    viewDistance: String(process.env.VIEW_DISTANCE) || 'normal'
+    host: config.server.host,
+    port: config.server.port,
+    username: config.server.username,
+    version: config.server.version,
+    auth: config.server.auth,
+    viewDistance: config.server.viewDistance,
+    connectTimeout: 30000,
+    checkTimeoutInterval: 30000
 });
 
 // Add pathfinder
@@ -31,22 +38,54 @@ let farmingSystem;
 let fishingBot;
 let followSystem;
 let waypointSystem;
+let commandSystem;
+let resourceMonitor;
+let webDashboard;
+
+// Initialize systems immediately (before spawn)
+inventoryManager = new InventoryManager(bot);
+autoEater = new AutoEater(bot, inventoryManager);
+combatSystem = new CombatSystem(bot, inventoryManager);
+farmingSystem = new FarmingSystem(bot);
+fishingBot = new FishingBot(bot);
+followSystem = new FollowSystem(bot);
+waypointSystem = new WaypointSystem(bot);
+resourceMonitor = new ResourceMonitor(bot);
+
+// Initialize command system with all other systems
+const systems = {
+    inventoryManager,
+    autoEater, 
+    combatSystem,
+    farmingSystem,
+    fishingBot,
+    followSystem,
+    waypointSystem,
+    monitor: resourceMonitor
+};
+
+commandSystem = new CommandSystem(bot, systems);
+
+// Start web dashboard if enabled
+if (config.web.enabled) {
+    webDashboard = new WebDashboard(bot, systems, config.web.port);
+    webDashboard.start();
+    console.log('🌐 Web dashboard started at http://localhost:' + config.web.port);
+} else {
+    console.log('📱 Web dashboard disabled in config');
+}
+
+console.log('🤖 Connecting to Minecraft server...');
+console.log(`Server: ${config.server.host}:${config.server.port}`);
+console.log(`Version: ${config.server.version}, Username: ${config.server.username}`);
+console.log('Attempting connection...');
 
 // Initialize pathfinder when bot spawns
 bot.once('spawn', () => {
     const movements = new Movements(bot);
     bot.pathfinder.setMovements(movements);
     
-    // Initialize inventory management and auto-eating
-    inventoryManager = new InventoryManager(bot);
-    autoEater = new AutoEater(bot, inventoryManager);
-    combatSystem = new CombatSystem(bot, inventoryManager);
-    farmingSystem = new FarmingSystem(bot);
-    fishingBot = new FishingBot(bot);
-    followSystem = new FollowSystem(bot);
-    waypointSystem = new WaypointSystem(bot);
-    
-    console.log('All bot systems loaded and ready!');
+    console.log('🎮 Bot connected and all systems ready!');
 });
 
 // Single chat event handler
@@ -215,27 +254,59 @@ async function weararmor() {
     }
 }
 
-// Connection events
+// Connection events with detailed logging
+bot.on('connecting', () => {
+    console.log('🔄 Connecting to server...');
+});
+
+bot.on('connect', () => {
+    console.log('🔗 Connected to server, logging in...');
+});
+
 bot.on("login", () => {
-    console.log("Bot logged in successfully");
-    bot.chat("loaded");
+    console.log("✅ Bot logged in successfully");
 });
 
 bot.on("spawn", () => {
-    console.log("Bot spawned at:", bot.entity.position);
-    bot.chat("find stone");
+    console.log("🎮 Bot spawned at:", bot.entity.position);
+    bot.chat("Bot connected and ready!");
 });
 
-// Error handling
+bot.on('playerJoined', (player) => {
+    console.log(`👋 Player joined: ${player.username}`);
+});
+
+bot.on('playerLeft', (player) => {
+    console.log(`👋 Player left: ${player.username}`);
+});
+
+// Error handling with detailed info
 bot.on("error", (err) => {
-    console.error("Bot error:", err);
+    console.error("❌ Bot connection error:");
+    console.error('Error code:', err.code);
+    console.error('Error message:', err.message);
+    console.error('Full error:', err);
+    
+    if (err.code === 'ENOTFOUND') {
+        console.error('🔍 Server not found. Check if the server address is correct and the server is online.');
+    } else if (err.code === 'ECONNREFUSED') {
+        console.error('🚫 Connection refused. Server might be offline or port is wrong.');
+    } else if (err.code === 'ETIMEDOUT') {
+        console.error('⏰ Connection timed out. Server might be slow or unreachable.');
+    }
 });
 
-bot.on("end", () => {
-    console.log("Bot disconnected");
+bot.on("end", (reason) => {
+    console.log("💔 Bot disconnected. Reason:", reason);
 });
 
 bot.on("kicked", (reason) => {
-    console.error("Bot was kicked:", JSON.parse(reason));
+    console.error("👢 Bot was kicked:");
+    try {
+        const parsed = JSON.parse(reason);
+        console.error('Kick reason:', parsed);
+    } catch (e) {
+        console.error('Raw kick reason:', reason);
+    }
 });
 

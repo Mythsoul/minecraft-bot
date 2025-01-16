@@ -106,6 +106,3 @@ The bot uses a modular architecture with separate systems:
 - `lib/commands.js` - Command handling
 - `lib/crafting.js` - Crafting automation
 
-## License
-
-ISC License
