@@ -47,3 +47,6 @@ coverage/
 
 package-lock.json
 bun.lockb
+
+# Ignore shell scripts for git manipulation
+*.sh
